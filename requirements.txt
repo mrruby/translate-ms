@@ -1,6 +1,5 @@
 pyaudio
 transformers==4.34.1
-socketio
 PyQt5
 torch==2.1.0
 python-socketio
