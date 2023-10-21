@@ -1,0 +1,6 @@
+/translate
+/dist
+/build
+/__pycache__
+
+main.spec

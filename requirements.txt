@@ -1,4 +1,7 @@
 pyaudio
+transformers==4.34.1
+PyQt5
+python-socketio
 SpeechRecognition
 --extra-index-url https://download.pytorch.org/whl/cu116
 torch
