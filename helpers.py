@@ -112,16 +112,7 @@ def prepare_model(source, enable_start_button, data_queue, src_lang_var, dest_la
                 else:
                     transcription[-1] = text
 
-                for line in transcription:
-                    print(line)
-                # Flush stdout.
-                print('', end='', flush=True)
-
                 # Infinite loops are bad for processors, must sleep.
-                sleep(0.25)
+                sleep(0.1)
         except KeyboardInterrupt:
             break
-
-    print("\n\nTranscription:")
-    for line in transcription:
-        print(line)

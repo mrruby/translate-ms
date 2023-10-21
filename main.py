@@ -8,6 +8,9 @@ from queue import Queue
 
 from helpers import prepare_model, record_callback, setup_recorder, toggle_listening_state
 import os
+
+from translate import create_session
+from roles import roles
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -23,10 +26,26 @@ def setup_ui(window, recorder, source, record_timeout, data_queue):
     def enable_start_button():
         start_button.config(state='normal')
 
-    stop_listening = None
-
     isSessionUp = tk.BooleanVar()
     isSessionUp.set(False)
+
+    src_lang_var = tk.StringVar(window)
+    src_lang_var.set("pl")  # default value
+    src_lang_label = tk.Label(window, text="Język źródłowy")
+    src_lang_dropdown = tk.OptionMenu(window, src_lang_var, "en", "uk", "pl")
+
+    dest_lang_var = tk.StringVar(window)
+    dest_lang_var.set("uk")
+    dest_lang_label = tk.Label(window, text="Język docelowy")
+    dest_lang_dropdown = tk.OptionMenu(window, dest_lang_var, "en", "uk", "pl")
+
+    role_var = tk.StringVar(window)
+
+    rolesKeys = list(roles.keys())
+    role_var.set(rolesKeys[0])
+    role_label = tk.Label(window, text="Rola")
+    role_dropdown = tk.OptionMenu(
+        window, role_var, *rolesKeys)
 
     def start_button_command():
         if isSessionUp.get():
@@ -34,6 +53,8 @@ def setup_ui(window, recorder, source, record_timeout, data_queue):
             start_button.config(text="Start")
         else:
             isSessionUp.set(True)
+            create_session(
+                src_lang_var.get(), dest_lang_var.get(), role_var.get())
             start_button.config(text="Stop")
         toggle_listening_state(
             recorder, source, record_callback, record_timeout, data_queue, isSessionUp)
@@ -42,20 +63,10 @@ def setup_ui(window, recorder, source, record_timeout, data_queue):
         window, text="Start", state='disabled',
         command=start_button_command)
 
-    src_lang_var = tk.StringVar(window)
-    src_lang_var.set("pl")  # default value
-    src_lang_label = tk.Label(window, text="Source Language")
-    src_lang_dropdown = tk.OptionMenu(window, src_lang_var, "en", "uk", "pl")
-
-    dest_lang_var = tk.StringVar(window)
-    dest_lang_var.set("uk")
-    dest_lang_label = tk.Label(window, text="Destination Language")
-    dest_lang_dropdown = tk.OptionMenu(window, dest_lang_var, "en", "uk", "pl")
-
     ui_elements = [start_button, src_lang_label,
-                   src_lang_dropdown, dest_lang_label, dest_lang_dropdown]
-    for index, element in enumerate(ui_elements):
-        element.grid(row=0, column=index)
+                   src_lang_dropdown, dest_lang_label, dest_lang_dropdown, role_label, role_dropdown]
+    for element in ui_elements:
+        element.pack(side='top')
 
     return enable_start_button, src_lang_var, dest_lang_var
 
@@ -73,22 +84,22 @@ def setup_window():
 
 
 def setup_socketio():
-    # sio_url = "https://2dvkjqkl-3000.euw.devtunnels.ms"
+    sio_url = "https://2dvkjqkl-3000.euw.devtunnels.ms"
     sio = socketio.Client()
-    # sio.connect(sio_url)
+    sio.connect(sio_url)
     return sio
 
 
 def setup_updates_frame(window):
     updates_frame = tk.Frame(window)
-    updates_frame.grid(row=1, column=0, columnspan=5, sticky='ew')
+    updates_frame.pack(side='bottom', fill='both', expand=True)
 
     updates_canvas = tk.Canvas(updates_frame)
-    updates_canvas.grid(row=1, sticky='ew')
+    updates_canvas.pack(side='left', fill='both', expand=True)
 
     updates_scrollbar = tk.Scrollbar(
         updates_frame, orient='vertical', command=updates_canvas.yview)
-    updates_scrollbar.grid(row=1, column=3, sticky='ns')
+    updates_scrollbar.pack(side='right', fill='y')
 
     updates_canvas.configure(yscrollcommand=updates_scrollbar.set)
     updates_canvas.bind('<Configure>', lambda e: updates_canvas.configure(
@@ -106,6 +117,9 @@ def create_ui():
     window.title("Transcription App")
     record_timeout = 2
 
+    sessionId = None
+    stop_listening = None
+
     recorder, source = setup_recorder()
     enable_start_button, src_lang_var, dest_lang_var = setup_ui(
         window, recorder, source, record_timeout, data_queue)
@@ -113,30 +127,24 @@ def create_ui():
     # Connect to the socketio server
     sio = setup_socketio()
 
-    # Function to update the UI with the received message
     updates_content_frame, updates_canvas = setup_updates_frame(window)
 
     @sio.on('update')
     def update_ui(message):
         original_text = message['original']
         translated_text = message['translated']
+        name = message['name']
         update_label = tk.Label(
-            updates_content_frame, text=f"Original: {original_text}, Translated: {translated_text}", anchor='w', font=("Helvetica", 20))
-        update_label.grid(sticky='ew')  # Changed from pack to grid
+            updates_content_frame,
+            text=f"{name}:\n Orginał: {original_text}\n Tłumaczenie: {translated_text}",
+            anchor='w',
+            justify='left',
+            font=("Helvetica", 14, 'bold'),
+            fg=roles[name]
+        )
+        update_label.pack(fill='x')
         updates_canvas.yview_moveto(1.0)
-
-    update_ui({"original": "Example 1", "translated": "Example 1"})
-    update_ui({"original": "Example 2", "translated": "Example 2"})
-    update_ui({"original": "Example 3", "translated": "Example 3"})
-    update_ui({"original": "Example 4", "translated": "Example 4"})
-    update_ui({"original": "Example 4", "translated": "Example 4"})
-    update_ui({"original": "Example 4", "translated": "Example 4"})
-    update_ui({"original": "Example 4", "translated": "Example 4"})
-    update_ui({"original": "Example 4", "translated": "Example 4"})
-    update_ui({"original": "Example 4", "translated": "Example 4"})
-    update_ui({"original": "Example 4", "translated": "Example 4"})
-
-    # Scroll to the bottom
+        updates_canvas.update_idletasks()
 
     # Create a thread for the main function and set daemon to True so it will terminate when the UI is closed
     main_thread = Thread(target=lambda: run_main(
