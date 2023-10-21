@@ -7,6 +7,8 @@ from threading import Thread
 from queue import Queue
 
 from helpers import prepare_model, record_callback, setup_recorder, toggle_listening_state
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def run_main(source, enable_start_button, data_queue, src_lang_var, dest_lang_var):
@@ -79,14 +81,14 @@ def setup_socketio():
 
 def setup_updates_frame(window):
     updates_frame = tk.Frame(window)
-    updates_frame.grid(row=1, column=0, columnspan=5, sticky='nsew')
+    updates_frame.grid(row=1, column=0, columnspan=5, sticky='ew')
 
     updates_canvas = tk.Canvas(updates_frame)
-    updates_canvas.grid(row=0, column=0, sticky='nsew')
+    updates_canvas.grid(row=1, sticky='ew')
 
     updates_scrollbar = tk.Scrollbar(
         updates_frame, orient='vertical', command=updates_canvas.yview)
-    updates_scrollbar.grid(row=0, column=1, sticky='ns')
+    updates_scrollbar.grid(row=1, column=3, sticky='ns')
 
     updates_canvas.configure(yscrollcommand=updates_scrollbar.set)
     updates_canvas.bind('<Configure>', lambda e: updates_canvas.configure(
@@ -123,7 +125,18 @@ def create_ui():
         update_label.grid(sticky='ew')  # Changed from pack to grid
         updates_canvas.yview_moveto(1.0)
 
-     # Scroll to the bottom
+    update_ui({"original": "Example 1", "translated": "Example 1"})
+    update_ui({"original": "Example 2", "translated": "Example 2"})
+    update_ui({"original": "Example 3", "translated": "Example 3"})
+    update_ui({"original": "Example 4", "translated": "Example 4"})
+    update_ui({"original": "Example 4", "translated": "Example 4"})
+    update_ui({"original": "Example 4", "translated": "Example 4"})
+    update_ui({"original": "Example 4", "translated": "Example 4"})
+    update_ui({"original": "Example 4", "translated": "Example 4"})
+    update_ui({"original": "Example 4", "translated": "Example 4"})
+    update_ui({"original": "Example 4", "translated": "Example 4"})
+
+    # Scroll to the bottom
 
     # Create a thread for the main function and set daemon to True so it will terminate when the UI is closed
     main_thread = Thread(target=lambda: run_main(
@@ -131,11 +144,13 @@ def create_ui():
     main_thread.daemon = True
     main_thread.start()
 
-    # Disconnect from the socketio server when the main thread ends
-    def on_main_thread_end():
+    # Disconnect from the socketio server and close the app when the main thread ends or the window close button is clicked
+    def on_close_or_main_thread_end():
         if not main_thread.is_alive():
             sio.disconnect()
-    window.protocol("WM_DELETE_WINDOW", on_main_thread_end)
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            window.destroy()
+    window.protocol("WM_DELETE_WINDOW", on_close_or_main_thread_end)
 
     window.mainloop()
 

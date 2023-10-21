@@ -5,6 +5,7 @@ import whisper
 import torch
 import requests
 from languages import lang_codes
+from translate import translate
 
 from datetime import datetime, timedelta
 from tempfile import NamedTemporaryFile
@@ -101,12 +102,8 @@ def prepare_model(source, enable_start_button, data_queue, src_lang_var, dest_la
                 result = audio_model.transcribe(
                     temp_file, language=language, fp16=torch.cuda.is_available())
                 text = result['text'].strip()
-                data = {
-                    "text": text,
-                    "src_lang": lang_codes[language],
-                    "tgt_lang": lang_codes[dest_lang_var.get()]
-                }
-                requests.post(url, headers=headers, json=data)
+                translate(text, lang_codes[language],
+                          lang_codes[dest_lang_var.get()])
 
                 # If we detected a pause between recordings, add a new item to our transcription.
                 # Otherwise edit the existing one.
@@ -115,8 +112,6 @@ def prepare_model(source, enable_start_button, data_queue, src_lang_var, dest_la
                 else:
                     transcription[-1] = text
 
-                # Clear the console to reprint the updated transcription.
-                os.system('cls' if os.name == 'nt' else 'clear')
                 for line in transcription:
                     print(line)
                 # Flush stdout.
