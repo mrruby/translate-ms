@@ -94,21 +94,9 @@ def setup_updates_frame(window):
     updates_frame = tk.Frame(window)
     updates_frame.pack(side='bottom', fill='both', expand=True)
 
-    updates_canvas = tk.Canvas(updates_frame)
-    updates_canvas.pack(side='left', fill='both', expand=True)
-
-    updates_scrollbar = tk.Scrollbar(
-        updates_frame, orient='vertical', command=updates_canvas.yview)
-    updates_scrollbar.pack(side='right', fill='y')
-
-    updates_canvas.configure(yscrollcommand=updates_scrollbar.set)
-    updates_canvas.bind('<Configure>', lambda e: updates_canvas.configure(
-        scrollregion=updates_canvas.bbox('all')))
-
-    updates_content_frame = tk.Frame(updates_canvas)
-    updates_canvas.create_window(
-        (0, 0), window=updates_content_frame, anchor='nw')
-    return updates_content_frame, updates_canvas
+    updates_content_frame = tk.Frame(updates_frame)
+    updates_content_frame.pack(side='left', fill='both', expand=True)
+    return updates_content_frame
 
 
 def create_ui():
@@ -127,7 +115,7 @@ def create_ui():
     # Connect to the socketio server
     sio = setup_socketio()
 
-    updates_content_frame, updates_canvas = setup_updates_frame(window)
+    updates_content_frame = setup_updates_frame(window)
 
     @sio.on('update')
     def update_ui(message):
@@ -139,12 +127,13 @@ def create_ui():
             text=f"{name}:\n Orginał: {original_text}\n Tłumaczenie: {translated_text}",
             anchor='w',
             justify='left',
-            font=("Helvetica", 14, 'bold'),
+            font=("Helvetica", 12, 'bold'),
             fg=roles[name]
         )
         update_label.pack(fill='x')
-        updates_canvas.yview_moveto(1.0)
-        updates_canvas.update_idletasks()
+        # Remove the oldest message if there are more than 10 messages
+        if len(updates_content_frame.winfo_children()) > 10:
+            updates_content_frame.winfo_children()[0].destroy()
 
     # Create a thread for the main function and set daemon to True so it will terminate when the UI is closed
     main_thread = Thread(target=lambda: run_main(
