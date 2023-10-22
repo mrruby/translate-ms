@@ -122,9 +122,13 @@ def create_ui():
         original_text = message['original']
         translated_text = message['translated']
         name = message['name']
+        original_text_formatted = '\n'.join(
+            [original_text[i:i+100] for i in range(0, len(original_text), 100)])
+        translated_text_formatted = '\n'.join(
+            [translated_text[i:i+100] for i in range(0, len(translated_text), 100)])
         update_label = tk.Label(
             updates_content_frame,
-            text=f"{name}:\n Orginał: {original_text}\n Tłumaczenie: {translated_text}",
+            text=f"{name}:\n Orginał: {original_text_formatted}\n Tłumaczenie: {translated_text_formatted}",
             anchor='w',
             justify='left',
             font=("Helvetica", 12, 'bold'),
