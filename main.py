@@ -84,7 +84,7 @@ def setup_window():
 
 
 def setup_socketio():
-    sio_url = "https://2dvkjqkl-3000.euw.devtunnels.ms"
+    sio_url = "https://2dvkjqkl-3000.euw.devtunnels.ms"  # This is the URL of the server
     sio = socketio.Client()
     sio.connect(sio_url)
     return sio
@@ -112,7 +112,6 @@ def create_ui():
     enable_start_button, src_lang_var, dest_lang_var = setup_ui(
         window, recorder, source, record_timeout, data_queue)
 
-    # Connect to the socketio server
     sio = setup_socketio()
 
     updates_content_frame = setup_updates_frame(window)
@@ -139,13 +138,11 @@ def create_ui():
         if len(updates_content_frame.winfo_children()) > 10:
             updates_content_frame.winfo_children()[0].destroy()
 
-    # Create a thread for the main function and set daemon to True so it will terminate when the UI is closed
     main_thread = Thread(target=lambda: run_main(
         source, enable_start_button, data_queue, src_lang_var, dest_lang_var))
     main_thread.daemon = True
     main_thread.start()
 
-    # Disconnect from the socketio server and close the app when the main thread ends or the window close button is clicked
     def on_close_or_main_thread_end():
         if not main_thread.is_alive():
             sio.disconnect()

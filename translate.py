@@ -12,7 +12,7 @@ def translate(text, src_lang, tgt_lang):
         "sessionId": sessionId
     }
     requests.post(
-        'https://2dvkjqkl-3000.euw.devtunnels.ms/transcribe', json=data)
+        'https://2dvkjqkl-3000.euw.devtunnels.ms/transcribe', json=data) # This is the URL of the server
     
 
 def create_session(src_lang, tgt_lang, role):
@@ -23,5 +23,5 @@ def create_session(src_lang, tgt_lang, role):
         "name": role
     }
     response = requests.post(
-        'https://2dvkjqkl-3000.euw.devtunnels.ms/session', json=data)
+        'https://2dvkjqkl-3000.euw.devtunnels.ms/session', json=data) # This is the URL of the server
     sessionId = response.json()["id"]

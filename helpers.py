@@ -27,11 +27,9 @@ def setup_recorder():
 def toggle_listening_state(recorder, source, record_callback, record_timeout, data_queue, isSessionUp):
     global stop_listening
     if isSessionUp.get():
-        # If the session is up, we want to start listening
         stop_listening = recorder.listen_in_background(
             source, record_callback(data_queue), phrase_time_limit=record_timeout)
     else:
-        # If the session is not up, we want to stop listening
         if stop_listening:
             stop_listening()
 
@@ -42,7 +40,6 @@ def record_callback(data_queue):
         Threaded callback function to receive audio data when recordings finish.
         audio: An AudioData containing the recorded bytes.
         """
-        # Grab the raw bytes and push it into the thread safe queue.
         data = audio.get_raw_data()
         data_queue.put(data)
     return wrapper
@@ -54,9 +51,6 @@ def prepare_model(source, enable_start_button, data_queue, src_lang_var, dest_la
     last_sample = bytes()
 
     audio_model = whisper.load_model("large")
-
-    url = "http://127.0.0.1:5000/translate"
-    headers = {"Content-Type": "application/json"}
 
     phrase_timeout = 3
 
